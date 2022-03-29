@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import io
 
-quartieri = gpd.read_file()
+quartieri = gpd.read_file("/workspace/flaskverifica/ds964_nil_wm.zip")
 newradio = gpd.read_file()
 
 @app.route('/', methods = ["GET"])
@@ -66,4 +66,5 @@ def stazionimunicipiopng():
     FigureCanvas(fig).print_png(output)
     return Response(output.getvalue(), mimetype = "image/png")
 
-if
+if __name__ == "__main__":
+    app.run(host = '0.0.0.0', port = 3246, debug = True)
