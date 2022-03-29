@@ -8,7 +8,7 @@ import pandas as pd
 import io
 
 quartieri = gpd.read_file("/workspace/flaskverifica/ds964_nil_wm.zip")
-newradio = gpd.read_file()
+newradio = gpd.read_file("/workspace/flaskverifica/newradio.csv")
 
 @app.route('/', methods = ["GET"])
 def homepage():
