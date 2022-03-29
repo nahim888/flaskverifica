@@ -1,5 +1,5 @@
-from flask import flask, render_template, request, Response
-app = flask(__name__)
+from flask import Flask, render_template, request
+app = Flask(__name__)
 
 import geopandas as gpd 
 import contextily as ctx 
@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import io
 
-quartieri = gpd.read_file("/workspace/flaskverifica/ds964_nil_wm.zip")
-newradio = gpd.read_file("/workspace/flaskverifica/newradio.csv")
+quartieri = gpd.read_file("/workspace/flaskverifica/NIL_WM.zip")
+newradio = gpd.read_file("/workspace/flaskverifica/myshapefile.zip")
 
 @app.route('/', methods = ["GET"])
 def homepage():
@@ -19,13 +19,14 @@ def sceltaquartiere():
     quartieri2 = quartieri["NIL"].drop_duplicates().sort_values(ascending = True).to_list()
     return render_template("sceltaquartiere.html", quar = quartieri2)
 
-@app.route('/listastazioni', methods = ["GET"])
-def listastazioni():
-    radio = request.args["sel"]
-    newradio = newradio.to_crs(epsg = 32632)
-    quartiere = quartieri[quartieri.NIL == radio]
-    listastazioni = newradio[newradio.within(quartiere.geometry.squeeze())]
-    return listastazioni.to_html()
+#@app.route('/listastazioni', methods = ["GET"])
+#def listastazioni():
+    #radio = request.args["sel"]
+    #newradio.crs = "EPSG:4326"
+    #newradio.to_crs(epsg=32632)
+    #quartiere = quartieri[quartieri.NIL == radio]
+    #listastazioni = newradio[newradio.within(quartiere.geometry.squeeze())]
+    #return listastazioni.to_html()
 
 @app.route('/indexmappa', methods = ["GET"])
 def indexmappa():
@@ -44,7 +45,7 @@ def ricercapng():
     fig, ax = plt.subplots(figsize =(12,8))
     quartiere.to_crs(epsg=3857).plot(ax=ax, alpha = 0.5, edgecolor = "k")
     #newradio = newradio.to_crs(epsg = 32632)
-    stazradioquartiere = newradi[newradio.within(quartiere.geometry.squeeze())]
+    stazradioquartiere = newradio[newradio.within(quartiere.geometry.squeeze())]
     stazradioquartiere.to_crs(epsg=3857).plot(ax=ax, color = "k")
     ctx.add_basemap(ax=ax)
     output = io.BytesIO()
