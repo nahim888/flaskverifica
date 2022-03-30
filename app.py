@@ -1,14 +1,20 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, send_file, make_response, url_for, Response, request
 app = Flask(__name__)
 
-import geopandas as gpd 
-import contextily as ctx 
-import matplotlib.pyplot as plt 
-import pandas as pd
 import io
+import os
+import geopandas as gpd
+import contextily as ctx
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 quartieri = gpd.read_file("/workspace/flaskverifica/NIL_WM.zip")
 newradio = gpd.read_file("/workspace/flaskverifica/myshapefile.zip")
+newradio.crs = "EPSG:4326"
+newradio.to_crs(epsg=32632)
 
 @app.route('/', methods = ["GET"])
 def homepage():
@@ -19,14 +25,12 @@ def sceltaquartiere():
     quartieri2 = quartieri["NIL"].drop_duplicates().sort_values(ascending = True).to_list()
     return render_template("sceltaquartiere.html", quar = quartieri2)
 
-#@app.route('/listastazioni', methods = ["GET"])
-#def listastazioni():
-    #radio = request.args["sel"]
-    #newradio.crs = "EPSG:4326"
-    #newradio.to_crs(epsg=32632)
-    #quartiere = quartieri[quartieri.NIL == radio]
-    #listastazioni = newradio[newradio.within(quartiere.geometry.squeeze())]
-    #return listastazioni.to_html()
+@app.route('/listastazioni', methods = ["GET"])
+def listastazioni():
+    radio = request.args["sel"]
+    quartiere = quartieri[quartieri.NIL == radio]
+    listastazioni = newradio[newradio.within(quartiere.geometry.squeeze())]
+    return listastazioni.to_html()
 
 @app.route('/indexmappa', methods = ["GET"])
 def indexmappa():
@@ -44,7 +48,6 @@ def mappastazioni():
 def ricercapng():
     fig, ax = plt.subplots(figsize =(12,8))
     quartiere.to_crs(epsg=3857).plot(ax=ax, alpha = 0.5, edgecolor = "k")
-    #newradio = newradio.to_crs(epsg = 32632)
     stazradioquartiere = newradio[newradio.within(quartiere.geometry.squeeze())]
     stazradioquartiere.to_crs(epsg=3857).plot(ax=ax, color = "k")
     ctx.add_basemap(ax=ax)
@@ -55,13 +58,16 @@ def ricercapng():
 @app.route('/stazionimunicipio', methods = ["GET"])
 def stazionimunicipio():
     global radiomunicipio
-    radiomunicipio = newradio.groupby("MUNICIPIO")["OPERATORE"].count().sort_values(by = "MUNICIPIO", ascending = True).reset_index()
-    return render_template("stazionimunicipio.html", radiomunicipio = radiomunicipio)
+    global radiomunicipio2
+    radiomunicipio = newradio.groupby("MUNICIPIO")["OPERATORE"].count().reset_index().sort_values(by = "MUNICIPIO", ascending = True)
+    radiomunicipio["MUNICIPIO"]=radiomunicipio["MUNICIPIO"].values.astype(str)
+    radiomunicipio2 = radiomunicipio.to_html()
+    return render_template("stazionimunicipio.html", radiomunicipio2=radiomunicipio2)
 
 @app.route('/stazionimunicipio.png', methods = ["GET"])
 def stazionimunicipiopng():
     fig = plt.figure(figsize = (12,8))
-    ax = plt.axes
+    ax = plt.axes()
     ax.bar(radiomunicipio["MUNICIPIO"], radiomunicipio["OPERATORE"])
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)

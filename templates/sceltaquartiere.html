@@ -1,6 +1,6 @@
 <form action="/listastazioni" method = "GET">
     {% for i in quar %}
-    <input type = "radio" name = "sel" value = {{i}} required/>{{i}}
+    <input type = "radio" name = "sel" value = "{{i}}" required/>{{i}}
     {% endfor %}
     <p><input type = "submit" value = "submit" required/></p>
 </form>
